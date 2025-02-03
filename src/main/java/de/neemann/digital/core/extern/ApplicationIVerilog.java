@@ -150,7 +150,7 @@ public class ApplicationIVerilog extends ApplicationVerilogStdIO {
                     ivp = p;
                     if (Files.isSymbolicLink(p)) {
                         try {
-                            ivp = Files.readSymbolicLink(ivp);
+                            ivp = Paths.get(sp, Files.readSymbolicLink(ivp).toString());
                         } catch (IOException ex) {
                             return false;
                         }

@@ -86,6 +86,7 @@ public class Model implements Iterable<Node>, SyncAccess {
     private final ArrayList<ModelStateObserver> observers;
     private ArrayList<ModelStateObserver> observersStep;
     private ArrayList<ModelStateObserver> observersMicroStep;
+    private boolean clkResetDone = false;
 
     /**
      * Creates a new model
@@ -204,14 +205,6 @@ public class Model implements Iterable<Node>, SyncAccess {
         doStep(noise);
         // state is CLOSED if an error during the first doStep has occurred!
         if (state != State.CLOSED) {
-            if (!resets.isEmpty()) {
-                for (Reset reset : resets)
-                    reset.clearReset();
-                if (!asyncMode)
-                    doStep(false);
-                else
-                    doMicroStep(false);
-            }
             LOGGER.debug("stabilizing took " + version + " micro steps");
             state = State.RUNNING;
             fireEvent(ModelEvent.STARTED);
@@ -1009,6 +1002,18 @@ public class Model implements Iterable<Node>, SyncAccess {
         }
         fireEvent(ModelEvent.MICROSTEP);  // record the external modification as a micro step!
         doStep();
+
+        if (!clkResetDone && version > 12) {
+            if (!resets.isEmpty()) {
+                for (Reset reset : resets)
+                    reset.clearReset();
+                if (!asyncMode)
+                    doStep(false);
+                else
+                    doMicroStep(false);
+            }
+            clkResetDone = true;
+        }
         return run;
     }
 
